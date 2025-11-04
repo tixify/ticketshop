@@ -1,5 +1,5 @@
-// integrate.js - Tixify Embed v5
-// Multiple shops | 700px container | Scrollable iframe | Custom border | Branded header & footer
+// integrate.js - Tixify Embed v5.1
+// Multi-shop | 700px container | Scrollable iframe | Custom border | Branded header & centered footer
 
 (function () {
   'use strict';
@@ -40,23 +40,35 @@
         max-width: 100%;
         display: inline-block;
       }
+      iframe.tixify-iframe {
+        width: 100%;
+        height: 800px;
+        display: block;
+        border-radius: 0.75rem;
+        border: 1px solid #cec1cf;
+      }
       .footer__row {
         margin: .75rem 0;
-        text-align: left;
+        text-align: center;
         position: relative;
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
         flex-wrap: wrap;
       }
       .footer__row__logo {
         position: relative;
         z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: .25rem;
+      }
+      .footer__row__logo span {
+        font-size: 0.875rem;
       }
       .footer__row__logo img {
         height: 1.25rem;
         vertical-align: middle;
-        margin-left: .25rem;
       }
       @media (max-width: 720px) {
         .tixify-shop-container {
@@ -99,12 +111,9 @@
     // --- Iframe ---
     var iframe = document.createElement('iframe');
     iframe.src = url;
+    iframe.className = 'tixify-iframe';
     iframe.title = 'Tixify Shop';
-    iframe.style.width = '100%';
-    iframe.style.height = '800px';
     iframe.style.border = '1px solid ' + borderColor;
-    iframe.style.borderRadius = '0.75rem';
-    iframe.style.display = 'block';
     iframe.setAttribute('scrolling', 'yes');
     iframe.setAttribute('allowfullscreen', '');
 
