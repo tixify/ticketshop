@@ -1,20 +1,17 @@
 // integrate.js - Tixify Embed v5
-// Uses iframe-resizer@5 (parent) for cross-domain compatibility
-// Each .shop-frame or #shop-frame -> iframe with scroll
+// Multiple shops | 700px container | Scrollable iframe | Custom border color
 
 (function () {
   'use strict';
 
   var PARENT_CDN = 'https://cdn.jsdelivr.net/npm/@iframe-resizer/parent@5.5.7';
 
-  // Default iframe-resizer settings
-  // Here we disable automatic height resizing and allow scrolling inside iframe
+  // iframe-resizer settings (v5)
   var DEFAULT_OPTIONS = {
     checkOrigin: false,
-    direction: 'none', // no automatic resizing, iframe handles its own scroll
+    direction: 'none', // don't auto-resize; iframe scrolls
     log: false,
     scrolling: true,
-    // license: 'GPLv3' // uncomment if open-source; set license key for commercial usage
   };
 
   function findContainers() {
@@ -28,24 +25,29 @@
       return null;
     }
 
-    // Skip duplicates
+    // Avoid duplicates
     if (container.querySelector('iframe')) return container.querySelector('iframe');
 
-    // Apply 800px fixed width container
-    container.style.maxWidth = '800px';
+    // Apply 700px fixed container styling
+    container.style.maxWidth = '700px';
     container.style.margin = '0 auto';
     container.style.width = '100%';
     container.style.position = 'relative';
 
+    // Border color (customizable)
+    var borderColor = container.getAttribute('data-border-color') || '#cec1cf';
+
+    // Create iframe
     var iframe = document.createElement('iframe');
     iframe.src = url;
     iframe.id = 'tixify-shop-' + Math.random().toString(36).slice(2, 9);
     iframe.title = 'Tixify Shop';
     iframe.style.width = '100%';
-    iframe.style.height = '800px'; // initial visible height
-    iframe.style.border = '0';
+    iframe.style.height = '800px'; // visible area
+    iframe.style.border = '1px solid ' + borderColor;
+    iframe.style.borderRadius = '0.75rem';
     iframe.style.display = 'block';
-    iframe.setAttribute('scrolling', 'yes'); // allow internal scrollbars
+    iframe.setAttribute('scrolling', 'yes');
     iframe.setAttribute('allowfullscreen', '');
 
     container.appendChild(iframe);
@@ -56,7 +58,6 @@
     if (typeof window.iframeResize === 'function') return cb();
 
     if (document.querySelector('script[data-tixify-iframes-resizer]')) {
-      // Wait until available
       var wait = setInterval(function () {
         if (typeof window.iframeResize === 'function') {
           clearInterval(wait);
