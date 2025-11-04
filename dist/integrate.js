@@ -48,28 +48,35 @@
         border: 1px solid #cec1cf;
       }
       .footer__row {
-        margin: .75rem 0;
-        text-align: center;
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      .footer__row__logo {
-        position: relative;
-        z-index: 5;
-        display: flex;
-        align-items: center;
-        gap: .25rem;
-      }
-      .footer__row__logo span {
-        font-size: 0.875rem;
-      }
-      .footer__row__logo img {
-        height: 1.25rem;
-        vertical-align: middle;
-      }
+  	margin: .75rem 0;
+  	text-align: center;
+  	position: relative;
+  	display: flex;
+  	justify-content: center;
+  	align-items: center;
+  	flex-wrap: wrap;
+	}
+	.footer__row__logo {
+ 	 position: relative;
+	  z-index: 5;
+ 	 display: flex;
+ 	 align-items: center;
+ 	 gap: .25rem;
+		}
+	.footer__row__logo a {
+  	text-decoration: none;
+ 	 color: inherit;
+	}
+	.footer__row__logo a:hover {
+	  text-decoration: none;
+	}
+	.footer__row__logo span {
+	  font-size: 0.875rem;
+	}
+	.footer__row__logo img {
+	  height: 1.25rem;
+	  vertical-align: middle;
+	}
       @media (max-width: 720px) {
         .tixify-shop-container {
           max-width: 100%;
@@ -104,7 +111,7 @@
     header.className = 'branded-header';
     header.innerHTML = `
       <div class="branded-header__logo">
-        <img src="https://cdn.openticket.tech/whitelabels/tixify.shop/graphics/logo.svg" alt="Tixify logo">
+        <img src="https://tixifylive.s3.us-east-1.amazonaws.com/assets/tixify-logo.svg" alt="Tixify logo">
       </div>
     `;
 
@@ -124,7 +131,7 @@
       <div class="footer__row__logo">
         <a target="_blank" href="https://tixify.live/">
           <span>Powered by</span>
-          <img src="https://cdn.openticket.tech/whitelabels/tixify.shop/graphics/logo.svg" alt="Powered by Tixify">
+          <img src="https://tixifylive.s3.us-east-1.amazonaws.com/assets/tixify-logo.svg" alt="Powered by Tixify">
         </a>
       </div>
     `;
