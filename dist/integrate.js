@@ -1,15 +1,14 @@
 // integrate.js - Tixify Embed v5
-// Multiple shops | 700px container | Scrollable iframe | Custom border color
+// Multiple shops | 700px container | Scrollable iframe | Custom border | Branded header & footer
 
 (function () {
   'use strict';
 
   var PARENT_CDN = 'https://cdn.jsdelivr.net/npm/@iframe-resizer/parent@5.5.7';
 
-  // iframe-resizer settings (v5)
   var DEFAULT_OPTIONS = {
     checkOrigin: false,
-    direction: 'none', // don't auto-resize; iframe scrolls
+    direction: 'none', // iframe scrolls itself
     log: false,
     scrolling: true,
   };
@@ -18,7 +17,61 @@
     return document.querySelectorAll('#shop-frame, .shop-frame');
   }
 
-  function createIframeFor(container) {
+  function injectStyles() {
+    if (document.getElementById('tixify-embed-styles')) return;
+    var css = `
+      .tixify-shop-container {
+        max-width: 700px;
+        width: 100%;
+        margin: 0 auto;
+        position: relative;
+      }
+      .branded-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        padding: 0 .875rem;
+      }
+      .branded-header__logo {
+        height: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .branded-header__logo img {
+        height: 100%;
+        max-width: 100%;
+        display: inline-block;
+      }
+      .footer__row {
+        margin: .75rem 0;
+        text-align: left;
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .footer__row__logo {
+        position: relative;
+        z-index: 5;
+      }
+      .footer__row__logo img {
+        height: 1.25rem;
+        vertical-align: middle;
+        margin-left: .25rem;
+      }
+      @media (max-width: 720px) {
+        .tixify-shop-container {
+          max-width: 100%;
+          padding: 0 1rem;
+        }
+      }
+    `;
+    var style = document.createElement('style');
+    style.id = 'tixify-embed-styles';
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function createIframeBlock(container) {
     var url = container.getAttribute('data-url');
     if (!url) {
       console.warn('Tixify Integrate: missing data-url', container);
@@ -26,31 +79,53 @@
     }
 
     // Avoid duplicates
-    if (container.querySelector('iframe')) return container.querySelector('iframe');
+    if (container.querySelector('.tixify-shop-container')) return;
 
-    // Apply 700px fixed container styling
-    container.style.maxWidth = '700px';
-    container.style.margin = '0 auto';
-    container.style.width = '100%';
-    container.style.position = 'relative';
-
-    // Border color (customizable)
     var borderColor = container.getAttribute('data-border-color') || '#cec1cf';
 
-    // Create iframe
+    // Create wrapper
+    var wrapper = document.createElement('div');
+    wrapper.className = 'tixify-shop-container';
+
+    // --- Header ---
+    var header = document.createElement('div');
+    header.className = 'branded-header';
+    header.innerHTML = `
+      <div class="branded-header__logo">
+        <img src="https://cdn.openticket.tech/whitelabels/tixify.shop/graphics/logo.svg" alt="Tixify logo">
+      </div>
+    `;
+
+    // --- Iframe ---
     var iframe = document.createElement('iframe');
     iframe.src = url;
-    iframe.id = 'tixify-shop-' + Math.random().toString(36).slice(2, 9);
     iframe.title = 'Tixify Shop';
     iframe.style.width = '100%';
-    iframe.style.height = '800px'; // visible area
+    iframe.style.height = '800px';
     iframe.style.border = '1px solid ' + borderColor;
     iframe.style.borderRadius = '0.75rem';
     iframe.style.display = 'block';
     iframe.setAttribute('scrolling', 'yes');
     iframe.setAttribute('allowfullscreen', '');
 
-    container.appendChild(iframe);
+    // --- Footer ---
+    var footer = document.createElement('div');
+    footer.className = 'footer__row';
+    footer.innerHTML = `
+      <div class="footer__row__logo">
+        <a target="_blank" href="https://tixify.live/">
+          <span>Powered by</span>
+          <img src="https://cdn.openticket.tech/whitelabels/tixify.shop/graphics/logo.svg" alt="Powered by Tixify">
+        </a>
+      </div>
+    `;
+
+    // Build final structure
+    wrapper.appendChild(header);
+    wrapper.appendChild(iframe);
+    wrapper.appendChild(footer);
+    container.appendChild(wrapper);
+
     return iframe;
   }
 
@@ -82,12 +157,14 @@
   }
 
   function init() {
+    injectStyles();
+
     var containers = findContainers();
     if (!containers.length) return;
 
     var iframes = [];
     containers.forEach(function (container) {
-      var iframe = createIframeFor(container);
+      var iframe = createIframeBlock(container);
       if (iframe) iframes.push(iframe);
     });
 
