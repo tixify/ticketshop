@@ -1,66 +1,45 @@
+// integrate.js - Tixify Embed v5
+// Uses iframe-resizer@5 (parent) for cross-domain compatibility
+// Each .shop-frame or #shop-frame -> iframe with scroll
+
 (function () {
-  function init() {
-    // Support both ID and class
-    var containers = document.querySelectorAll("#shop-frame, .shop-frame");
-    if (!containers.length) {
-      console.warn("Tixify Integrate: No shop container found (#shop-frame or .shop-frame)");
-      return;
-    }
+  'use strict';
 
-    // Load iframe-resizer once
-    function loadResizer(callback) {
-      if (typeof iFrameResize !== "undefined") {
-        callback();
-        return;
-      }
+  var PARENT_CDN = 'https://cdn.jsdelivr.net/npm/@iframe-resizer/parent@5.5.7';
 
-      var script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/iframe-resizer/js/iframeResizer.min.js";
-      script.onload = callback;
-      document.head.appendChild(script);
-    }
+  // Default iframe-resizer settings
+  // Here we disable automatic height resizing and allow scrolling inside iframe
+  var DEFAULT_OPTIONS = {
+    checkOrigin: false,
+    direction: 'none', // no automatic resizing, iframe handles its own scroll
+    log: false,
+    scrolling: true,
+    // license: 'GPLv3' // uncomment if open-source; set license key for commercial usage
+  };
 
-    // Create iframes for all containers
-    function setupIframes() {
-      containers.forEach(function (container) {
-        var url = container.getAttribute("data-url");
-        if (!url) {
-          console.warn("Tixify Integrate: Missing data-url for container", container);
-          return;
-        }
-
-        // Avoid duplicate iframes if re-initialized
-        if (container.querySelector("iframe")) return;
-
-        var iframe = document.createElement("iframe");
-        iframe.src = url;
-        iframe.style.width = "100%";
-        iframe.style.border = "0";
-        iframe.style.display = "block";
-        iframe.setAttribute("scrolling", "no");
-        iframe.setAttribute("allowfullscreen", "");
-
-        container.appendChild(iframe);
-
-        iFrameResize(
-          {
-            log: false,
-            checkOrigin: false,
-            heightCalculationMethod: "max",
-          },
-          iframe
-        );
-      });
-    }
-
-    // Load resizer, then setup
-    loadResizer(setupIframes);
+  function findContainers() {
+    return document.querySelectorAll('#shop-frame, .shop-frame');
   }
 
-  // Wait for DOM to be ready
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    init();
-  } else {
-    document.addEventListener("DOMContentLoaded", init);
-  }
-})();
+  function createIframeFor(container) {
+    var url = container.getAttribute('data-url');
+    if (!url) {
+      console.warn('Tixify Integrate: missing data-url', container);
+      return null;
+    }
+
+    // Skip duplicates
+    if (container.querySelector('iframe')) return container.querySelector('iframe');
+
+    // Apply 800px fixed width container
+    container.style.maxWidth = '800px';
+    container.style.margin = '0 auto';
+    container.style.width = '100%';
+    container.style.position = 'relative';
+
+    var iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.id = 'tixify-shop-' + Math.random().toString(36).slice(2, 9);
+    iframe.title = 'Tixify Shop';
+    iframe.style.width = '100%';
+    iframe.style.height = '800px'; // initial
