@@ -42,4 +42,75 @@
     iframe.id = 'tixify-shop-' + Math.random().toString(36).slice(2, 9);
     iframe.title = 'Tixify Shop';
     iframe.style.width = '100%';
-    iframe.style.height = '800px'; // initial
+    iframe.style.height = '800px'; // initial visible height
+    iframe.style.border = '0';
+    iframe.style.display = 'block';
+    iframe.setAttribute('scrolling', 'yes'); // allow internal scrollbars
+    iframe.setAttribute('allowfullscreen', '');
+
+    container.appendChild(iframe);
+    return iframe;
+  }
+
+  function loadParentLibOnce(cb) {
+    if (typeof window.iframeResize === 'function') return cb();
+
+    if (document.querySelector('script[data-tixify-iframes-resizer]')) {
+      // Wait until available
+      var wait = setInterval(function () {
+        if (typeof window.iframeResize === 'function') {
+          clearInterval(wait);
+          cb();
+        }
+      }, 50);
+      setTimeout(function () { clearInterval(wait); }, 10000);
+      return;
+    }
+
+    var s = document.createElement('script');
+    s.src = PARENT_CDN;
+    s.async = true;
+    s.defer = true;
+    s.setAttribute('data-tixify-iframes-resizer', '1');
+    s.onload = cb;
+    s.onerror = function () {
+      console.error('Tixify Integrate: failed to load iframe-resizer parent script');
+      cb(new Error('iframe-resizer load failed'));
+    };
+    document.head.appendChild(s);
+  }
+
+  function init() {
+    var containers = findContainers();
+    if (!containers.length) return;
+
+    var iframes = [];
+    containers.forEach(function (container) {
+      var iframe = createIframeFor(container);
+      if (iframe) iframes.push(iframe);
+    });
+
+    if (!iframes.length) return;
+
+    loadParentLibOnce(function () {
+      try {
+        var bindFn = window.iframeResize || (window.iframeResize && window.iframeResize.default);
+        if (typeof bindFn !== 'function') {
+          console.warn('Tixify Integrate: iframeResize() not found after loading.');
+          return;
+        }
+        bindFn(DEFAULT_OPTIONS, iframes);
+      } catch (e) {
+        console.error('Tixify Integrate: iframe-resizer init error', e);
+      }
+    });
+  }
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(init, 0);
+  } else {
+    document.addEventListener('DOMContentLoaded', init);
+  }
+
+  window.TixifyShopEmbed = { init: init };
+})();
