@@ -1,6 +1,23 @@
 // integrate.js - Tixify Embed v5.1
 // Multi-shop | 700px container | Scrollable iframe | Custom border | Branded header & centered footer
 
+function loadExternalScript(src, onLoad) {
+  var script = document.createElement('script');
+  script.type = "text/javascript";
+  script.src = src;
+  script.async = true;
+  if (typeof onLoad === "function") {
+    script.onload = onLoad;
+  }
+  document.head.appendChild(script);
+}
+
+// Example usage:
+loadExternalScript("https://vivenu.com/web/deliver/js/v1/embed.js", function() {
+  // Optional: code to run after the script loads
+  console.log("vivenu embed script loaded!");
+});
+
 (function () {
   'use strict';
 
