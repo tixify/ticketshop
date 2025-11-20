@@ -20,6 +20,20 @@
         box-sizing: border-box;
         background: transparent !important;
       }
+      .branded-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        padding: 0 .875rem;
+      }
+      .branded-header__logo {
+        height: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .branded-header__logo img {
+        height: 100%;
+        max-width: 100%;
+        display: inline-block;
+      }
       .tixify-iframe {
         width: 100%;
         display: block;
@@ -32,6 +46,36 @@
       }
       .tixify-iframe::-webkit-scrollbar {
         display: none;              /* Chrome, Safari, Opera */
+      }
+      .footer__row {
+        margin: .75rem 0;
+        text-align: center;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .footer__row__logo {
+        position: relative;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: .25rem;
+      }
+      .footer__row__logo a {
+        text-decoration: none;
+        color: inherit;
+      }
+      .footer__row__logo a:hover {
+        text-decoration: none;
+      }
+      .footer__row__logo span {
+        font-size: 0.875rem;
+      }
+      .footer__row__logo img {
+        height: 1.25rem;
+        vertical-align: middle;
       }
       @media (max-width: 720px) {
         .tixify-shop-container {
@@ -73,9 +117,16 @@
     // --- Structure ---
     var wrapper = document.createElement('div');
     wrapper.className = 'tixify-shop-container';
-    wrapper.style.height = containerHeight; // set the container height
+    wrapper.style.height = containerHeight;
 
-    // --- (optional) Header/Footer - keep as needed ---
+    // --- Header ---
+    var header = document.createElement('div');
+    header.className = 'branded-header';
+    header.innerHTML = `
+      <div class="branded-header__logo">
+        <img src="https://tixifylive.s3.us-east-1.amazonaws.com/assets/tixify-logo.svg" alt="Tixify logo">
+      </div>
+    `;
 
     // --- Iframe with horizontal padding via wrapper ---
     var iframePadWrap = document.createElement('div');
@@ -89,15 +140,27 @@
     iframe.style.border = '1px solid ' + borderColor;
     iframe.setAttribute('scrolling', 'yes'); // allow scroll
     iframe.setAttribute('allowfullscreen', '');
-    iframe.style.height = iframeHeight; // set iframe height from attribute
-
-    // Hide scrollbars visually, but keep scrollable
-    iframe.style.overflow = "auto";
+    iframe.style.height = iframeHeight;
+    iframe.style.overflow = "auto"; // scrollable (CSS hides scrollbars)
 
     iframePadWrap.appendChild(iframe);
 
+    // --- Footer ---
+    var footer = document.createElement('div');
+    footer.className = 'footer__row';
+    footer.innerHTML = `
+      <div class="footer__row__logo">
+        <a target="_blank" href="https://tixify.live/">
+          <span>Powered by</span>
+          <img src="https://tixifylive.s3.us-east-1.amazonaws.com/assets/tixify-logo.svg" alt="Powered by Tixify">
+        </a>
+      </div>
+    `;
+
     // --- Assemble ---
+    wrapper.appendChild(header);
     wrapper.appendChild(iframePadWrap);
+    wrapper.appendChild(footer);
 
     container.appendChild(wrapper);
 
@@ -121,4 +184,5 @@
     document.addEventListener('DOMContentLoaded', init);
   }
   window.TixifyShopEmbed = { init: init };
+
 })();
