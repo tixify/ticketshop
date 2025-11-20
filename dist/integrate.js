@@ -1,5 +1,25 @@
 (function () {
+
   'use strict';
+
+  // --- Add iframe-resizer parent script dynamically (if not already loaded) ---
+  function loadIframeResizerParent(callback) {
+    if (typeof window.iframeResize === 'function') return callback && callback();
+    if (document.getElementById('tixify-iframe-resizer-parent')) {
+      // Already loading, wait
+      var wait = setInterval(function () {
+        if (typeof window.iframeResize === 'function') { clearInterval(wait); callback && callback(); }
+      }, 50);
+      setTimeout(function () { clearInterval(wait); }, 10000);
+      return;
+    }
+    var s = document.createElement('script');
+    s.id = 'tixify-iframe-resizer-parent';
+    s.src = 'https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.9/js/iframeResizer.min.js';
+    s.async = true;
+    s.onload = function () { callback && callback(); };
+    document.head.appendChild(s);
+  }
 
   // --- STYLES ---
   function injectStyles() {
@@ -133,7 +153,7 @@
     iframe.setAttribute('frameborder', '0');
     iframe.style.border = '1px solid ' + borderColor;
     iframe.setAttribute('allowfullscreen', '');
-    iframe.setAttribute('scrolling', 'no'); // you can keep as "no", since height fits content
+    iframe.setAttribute('scrolling', 'no');
 
     // Each iframe gets a unique id
     var iframeID = 'tixifyIframe-' + idx;
@@ -160,24 +180,34 @@
 
     container.appendChild(wrapper);
 
-    // Resizer: Run onload, resizes whenever loaded
+    // Direct JS Resizer (same-domain optimization)
     iframe.onload = function() {
       try {
-        // If document.domain is handled on both sides, this works across subdomains
         var innerDoc = iframe.contentWindow.document;
         var height = innerDoc.body ? innerDoc.body.scrollHeight : 0;
         iframe.style.height = height + 'px';
-        // Optionally: set parent container a bit higher for header/footer/branding (ex: +100px)
         wrapper.style.height = (height + 100) + 'px';
       } catch (e) {
-        // If this fails, it's a cross-domain scenario: fallback to fixed height, display a warning, etc.
-        console.warn('Could not auto-resize iframe. Cross-origin restriction or missing content.');
-        iframe.style.height = '800px';
-        wrapper.style.height = '900px';
+        // If direct resize fails, try iframe-resizer (cross-domain flow)
+        if (typeof window.iframeResize === 'function') {
+          window.iframeResize({
+            checkOrigin: false,
+            log: false,
+            heightCalculationMethod: 'bodyScroll',
+            onResized: function(data) {
+              iframe.style.height = data.height + 'px';
+              wrapper.style.height = (parseInt(data.height, 10) + 100) + 'px';
+            }
+          }, iframe);
+        } else {
+          // fallback height
+          iframe.style.height = '800px';
+          wrapper.style.height = '900px';
+        }
       }
     };
 
-    // Also resize on window resize (handles dynamic content)
+    // Also resize on window resize
     window.addEventListener('resize', function() {
       try {
         var innerDoc = iframe.contentWindow.document;
@@ -185,8 +215,22 @@
         iframe.style.height = height + 'px';
         wrapper.style.height = (height + 100) + 'px';
       } catch (e) {
-        iframe.style.height = '800px';
-        wrapper.style.height = '900px';
+        // fallback (no-op; iframe-resizer will handle)
+      }
+    });
+
+    // If onload didn't work (e.g., cross-domain), try iframe-resizer
+    loadIframeResizerParent(function() {
+      if (typeof window.iframeResize === 'function') {
+        window.iframeResize({
+          checkOrigin: false,
+          log: false,
+          heightCalculationMethod: 'bodyScroll',
+          onResized: function(data) {
+            iframe.style.height = data.height + 'px';
+            wrapper.style.height = (parseInt(data.height, 10) + 100) + 'px';
+          }
+        }, iframe);
       }
     });
 
@@ -210,4 +254,5 @@
     document.addEventListener('DOMContentLoaded', init);
   }
   window.TixifyShopEmbed = { init: init };
+
 })();
