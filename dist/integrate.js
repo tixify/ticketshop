@@ -42,10 +42,11 @@
         box-sizing: border-box;
         background: transparent !important;
         overflow: auto;
-        scrollbar-width: none;      /* Firefox */
+        /* No scrollbars: */
+        scrollbar-width: none;
       }
       .tixify-iframe::-webkit-scrollbar {
-        display: none;              /* Chrome, Safari, Opera */
+        display: none;
       }
       .footer__row {
         margin: .75rem 0;
@@ -98,7 +99,7 @@
     return document.querySelectorAll('.shop-frame, #shop-frame');
   }
 
-  function createIframeBlock(container) {
+  function createIframeBlock(container, idx) {
     var url = container.getAttribute('data-url');
     if (!url) {
       console.warn('Tixify Integrate: missing data-url', container);
@@ -108,16 +109,9 @@
 
     var borderColor = container.getAttribute('data-border-color') || '#cec1cf';
 
-    // --- height logic ---
-    var iframeHeight = container.getAttribute('data-iframe-height') || '800px';
-    // Add 100px to container height (parse px value)
-    var numericHeight = parseInt(iframeHeight.replace('px', ''), 10) || 800;
-    var containerHeight = (numericHeight + 100) + 'px';
-
-    // --- Structure ---
+    // Structure
     var wrapper = document.createElement('div');
     wrapper.className = 'tixify-shop-container';
-    wrapper.style.height = containerHeight;
 
     // --- Header ---
     var header = document.createElement('div');
@@ -138,10 +132,12 @@
     iframe.title = 'Tixify Shop';
     iframe.setAttribute('frameborder', '0');
     iframe.style.border = '1px solid ' + borderColor;
-    iframe.setAttribute('scrolling', 'yes'); // allow scroll
     iframe.setAttribute('allowfullscreen', '');
-    iframe.style.height = iframeHeight;
-    iframe.style.overflow = "auto"; // scrollable (CSS hides scrollbars)
+    iframe.setAttribute('scrolling', 'no'); // you can keep as "no", since height fits content
+
+    // Each iframe gets a unique id
+    var iframeID = 'tixifyIframe-' + idx;
+    iframe.id = iframeID;
 
     iframePadWrap.appendChild(iframe);
 
@@ -164,6 +160,36 @@
 
     container.appendChild(wrapper);
 
+    // Resizer: Run onload, resizes whenever loaded
+    iframe.onload = function() {
+      try {
+        // If document.domain is handled on both sides, this works across subdomains
+        var innerDoc = iframe.contentWindow.document;
+        var height = innerDoc.body ? innerDoc.body.scrollHeight : 0;
+        iframe.style.height = height + 'px';
+        // Optionally: set parent container a bit higher for header/footer/branding (ex: +100px)
+        wrapper.style.height = (height + 100) + 'px';
+      } catch (e) {
+        // If this fails, it's a cross-domain scenario: fallback to fixed height, display a warning, etc.
+        console.warn('Could not auto-resize iframe. Cross-origin restriction or missing content.');
+        iframe.style.height = '800px';
+        wrapper.style.height = '900px';
+      }
+    };
+
+    // Also resize on window resize (handles dynamic content)
+    window.addEventListener('resize', function() {
+      try {
+        var innerDoc = iframe.contentWindow.document;
+        var height = innerDoc.body ? innerDoc.body.scrollHeight : 0;
+        iframe.style.height = height + 'px';
+        wrapper.style.height = (height + 100) + 'px';
+      } catch (e) {
+        iframe.style.height = '800px';
+        wrapper.style.height = '900px';
+      }
+    });
+
     return iframe;
   }
 
@@ -172,8 +198,8 @@
     injectStyles();
     var containers = findContainers();
     if (!containers.length) return;
-    containers.forEach(function (container) {
-      createIframeBlock(container);
+    containers.forEach(function (container, idx) {
+      createIframeBlock(container, idx);
     });
   }
 
@@ -184,5 +210,4 @@
     document.addEventListener('DOMContentLoaded', init);
   }
   window.TixifyShopEmbed = { init: init };
-
 })();
