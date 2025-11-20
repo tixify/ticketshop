@@ -1,18 +1,5 @@
-// integrate.js - Custom Tixify Embed (Updated)
-// Multi-shop | 600px container | Horizontal + vertical padding | No scrollbars | Branded header & centered footer | iframe-resizer
-
 (function () {
   'use strict';
-
-  // --- CONFIG ---
-  var PARENT_CDN = 'https://cdn.jsdelivr.net/npm/@iframe-resizer/parent@5.5.7';
-
-  var DEFAULT_OPTIONS = {
-    checkOrigin: false,
-    direction: 'none', // iframe takes care of its own scrolling
-    log: false,
-    scrolling: true,
-  };
 
   // --- STYLES ---
   function injectStyles() {
@@ -25,66 +12,26 @@
         position: relative;
         padding: 10px;
         box-sizing: border-box;
-        background: #fff;
+        background: transparent !important;
       }
       .iframe-pad-wrap {
         padding-left: 2%;
         padding-right: 2%;
         box-sizing: border-box;
-        background: #fff;
-      }
-      .branded-header {
-        text-align: center;
-        margin-bottom: 1.5rem;
-        padding: 0 .875rem;
-      }
-      .branded-header__logo {
-        height: 1.5rem;
-        margin-bottom: 1rem;
-      }
-      .branded-header__logo img {
-        height: 100%;
-        max-width: 100%;
-        display: inline-block;
+        background: transparent !important;
       }
       .tixify-iframe {
         width: 100%;
-        height: 800px;
         display: block;
         border-radius: 0.75rem;
         border: 1px solid #cec1cf;
         box-sizing: border-box;
-        background: #fff;
+        background: transparent !important;
+        overflow: auto;
+        scrollbar-width: none;      /* Firefox */
       }
-      .footer__row {
-        margin: .75rem 0;
-        text-align: center;
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      .footer__row__logo {
-        position: relative;
-        z-index: 5;
-        display: flex;
-        align-items: center;
-        gap: .25rem;
-      }
-      .footer__row__logo a {
-        text-decoration: none;
-        color: inherit;
-      }
-      .footer__row__logo a:hover {
-        text-decoration: none;
-      }
-      .footer__row__logo span {
-        font-size: 0.875rem;
-      }
-      .footer__row__logo img {
-        height: 1.25rem;
-        vertical-align: middle;
+      .tixify-iframe::-webkit-scrollbar {
+        display: none;              /* Chrome, Safari, Opera */
       }
       @media (max-width: 720px) {
         .tixify-shop-container {
@@ -102,32 +49,6 @@
     document.head.appendChild(style);
   }
 
-  // --- LOAD IFRAME-RESIZER LIB ---
-  function loadParentLibOnce(cb) {
-    if (typeof window.iframeResize === 'function') return cb();
-    if (document.querySelector('script[data-tixify-iframes-resizer]')) {
-      // Already loading, just wait for it
-      var wait = setInterval(function () {
-        if (typeof window.iframeResize === 'function') {
-          clearInterval(wait); cb();
-        }
-      }, 50);
-      setTimeout(function () { clearInterval(wait); }, 10000);
-      return;
-    }
-    var s = document.createElement('script');
-    s.src = PARENT_CDN;
-    s.async = true;
-    s.defer = true;
-    s.setAttribute('data-tixify-iframes-resizer', '1');
-    s.onload = cb;
-    s.onerror = function () {
-      console.error('Tixify Integrate: failed to load iframe-resizer parent script');
-      cb(new Error('iframe-resizer load failed'));
-    };
-    document.head.appendChild(s);
-  }
-
   // --- CORE EMBED FUNCTION ---
   function findContainers() {
     return document.querySelectorAll('.shop-frame, #shop-frame');
@@ -139,24 +60,22 @@
       console.warn('Tixify Integrate: missing data-url', container);
       return null;
     }
-
-    // Avoid duplicates
     if (container.querySelector('.tixify-shop-container')) return null;
 
     var borderColor = container.getAttribute('data-border-color') || '#cec1cf';
 
+    // --- height logic ---
+    var iframeHeight = container.getAttribute('data-iframe-height') || '800px';
+    // Add 100px to container height (parse px value)
+    var numericHeight = parseInt(iframeHeight.replace('px', ''), 10) || 800;
+    var containerHeight = (numericHeight + 100) + 'px';
+
     // --- Structure ---
     var wrapper = document.createElement('div');
     wrapper.className = 'tixify-shop-container';
+    wrapper.style.height = containerHeight; // set the container height
 
-    // --- Header ---
-    var header = document.createElement('div');
-    header.className = 'branded-header';
-    header.innerHTML = `
-      <div class="branded-header__logo">
-        <img src="https://tixifylive.s3.us-east-1.amazonaws.com/assets/tixify-logo.svg" alt="Tixify logo">
-      </div>
-    `;
+    // --- (optional) Header/Footer - keep as needed ---
 
     // --- Iframe with horizontal padding via wrapper ---
     var iframePadWrap = document.createElement('div');
@@ -166,28 +85,19 @@
     iframe.src = url;
     iframe.className = 'tixify-iframe';
     iframe.title = 'Tixify Shop';
+    iframe.setAttribute('frameborder', '0');
     iframe.style.border = '1px solid ' + borderColor;
-    iframe.setAttribute('scrolling', 'no'); // No scrollbars
+    iframe.setAttribute('scrolling', 'yes'); // allow scroll
     iframe.setAttribute('allowfullscreen', '');
+    iframe.style.height = iframeHeight; // set iframe height from attribute
+
+    // Hide scrollbars visually, but keep scrollable
+    iframe.style.overflow = "auto";
 
     iframePadWrap.appendChild(iframe);
 
-    // --- Footer ---
-    var footer = document.createElement('div');
-    footer.className = 'footer__row';
-    footer.innerHTML = `
-      <div class="footer__row__logo">
-        <a target="_blank" href="https://tixify.live/">
-          <span>Powered by</span>
-          <img src="https://tixifylive.s3.us-east-1.amazonaws.com/assets/tixify-logo.svg" alt="Powered by Tixify">
-        </a>
-      </div>
-    `;
-
     // --- Assemble ---
-    wrapper.appendChild(header);
     wrapper.appendChild(iframePadWrap);
-    wrapper.appendChild(footer);
 
     container.appendChild(wrapper);
 
@@ -199,23 +109,8 @@
     injectStyles();
     var containers = findContainers();
     if (!containers.length) return;
-    var iframes = [];
     containers.forEach(function (container) {
-      var iframe = createIframeBlock(container);
-      if (iframe) iframes.push(iframe);
-    });
-    if (!iframes.length) return;
-    loadParentLibOnce(function () {
-      try {
-        var bindFn = window.iframeResize || (window.iframeResize && window.iframeResize.default);
-        if (typeof bindFn !== 'function') {
-          console.warn('Tixify Integrate: iframeResize() not found after loading.');
-          return;
-        }
-        bindFn(DEFAULT_OPTIONS, iframes);
-      } catch (e) {
-        console.error('Tixify Integrate: iframe-resizer init error', e);
-      }
+      createIframeBlock(container);
     });
   }
 
