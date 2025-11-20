@@ -154,11 +154,8 @@
     iframe.style.border = '1px solid ' + borderColor;
     iframe.setAttribute('allowfullscreen', '');
     iframe.setAttribute('scrolling', 'no');
-
-    // Each iframe gets a unique id
     var iframeID = 'tixifyIframe-' + idx;
     iframe.id = iframeID;
-
     iframePadWrap.appendChild(iframe);
 
     // --- Footer ---
@@ -188,19 +185,19 @@
         iframe.style.height = height + 'px';
         wrapper.style.height = (height + 100) + 'px';
       } catch (e) {
-        // If direct resize fails, try iframe-resizer (cross-domain flow)
+        // If direct resize fails, iframe-resizer will handle it if available
         if (typeof window.iframeResize === 'function') {
           window.iframeResize({
             checkOrigin: false,
             log: false,
-            heightCalculationMethod: 'bodyScroll',
+            license: "GPLv3",
+            heightCalculationMethod: 'auto',
             onResized: function(data) {
               iframe.style.height = data.height + 'px';
               wrapper.style.height = (parseInt(data.height, 10) + 100) + 'px';
             }
           }, iframe);
         } else {
-          // fallback height
           iframe.style.height = '800px';
           wrapper.style.height = '900px';
         }
@@ -219,13 +216,14 @@
       }
     });
 
-    // If onload didn't work (e.g., cross-domain), try iframe-resizer
+    // Always try to initialize iframe-resizer in case cross-domain scenario
     loadIframeResizerParent(function() {
       if (typeof window.iframeResize === 'function') {
         window.iframeResize({
           checkOrigin: false,
           log: false,
-          heightCalculationMethod: 'bodyScroll',
+          license: "GPLv3",
+          heightCalculationMethod: 'auto',
           onResized: function(data) {
             iframe.style.height = data.height + 'px';
             wrapper.style.height = (parseInt(data.height, 10) + 100) + 'px';
